@@ -2058,6 +2058,26 @@ function renderBudgetSummary(s, pn){
     + '</div>';
 }
 
+function renderSlideHTML(slide, pageNum){
+  if(!slide) return '';
+  const pn = '<div class="pagenum">'+pageNum+'</div>';
+  switch(slide.kind){
+    case 'title': return renderTitle(slide);
+    case 'overview': return renderOverview(slide, pn);
+    case 'bignumber': return renderBignumber(slide, pn);
+    case 'cardgrid': return renderCardgrid(slide, pn);
+    case 'specpoints': return renderSpecpoints(slide, pn);
+    case 'photogrid': return renderPhotogrid(slide, pn);
+    case 'photospec': return renderPhotospec(slide, pn);
+    case 'photocompare': return renderPhotocompare(slide, pn);
+    case 'listrows': return renderListrows(slide, pn);
+    case 'exclusion': return renderExclusion(slide, pn);
+    case 'closing': return renderClosing(slide, pn);
+    case 'budgetsummary': return renderBudgetSummary(slide, pn);
+    default: return '<div class="slide">'+pn+'<p>不明なスライド種別: '+escapeHtml(String(slide.kind))+'</p></div>';
+  }
+}
+
 /* ================= Editor form builders ================= */
 /* Each editor function renders inner HTML for the slide-card-body,
    and wires up event listeners via data-bind attributes handled by delegation. */
