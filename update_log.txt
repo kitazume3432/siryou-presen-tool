@@ -1,5 +1,5 @@
 ============================================== 
-Update started: 2026/08/08 21:35:18.40 
-Folder: V:\AI\北爪\ツール更新\siryou-presen-tool 
+Update started: 2026/08/09  8:58:39.01 
+Folder: Z:\siryou-presen-tool 
 ============================================== 
-Overwrote index.html with: index (38).html 
+Overwrote index.html with: index (39).html 
