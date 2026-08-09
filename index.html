@@ -2059,6 +2059,11 @@ function renderBudgetSummary(s, pn){
     + '</div>';
 }
 
+function renderPdfImage(s, pn){
+  const img = s.image ? '<img src="'+s.image+'" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#fff;">' : '';
+  return '<div class="slide">'+img+pn+'</div>';
+}
+
 function renderSlideHTML(slide, pageNum){
   if(!slide) return '';
   const pn = '<div class="pagenum">'+pageNum+'</div>';
@@ -2075,6 +2080,7 @@ function renderSlideHTML(slide, pageNum){
     case 'exclusion': return renderExclusion(slide, pn);
     case 'closing': return renderClosing(slide, pn);
     case 'budgetsummary': return renderBudgetSummary(slide, pn);
+    case 'pdfimage': return renderPdfImage(slide, pn);
     default: return '<div class="slide">'+pn+'<p>不明なスライド種別: '+escapeHtml(String(slide.kind))+'</p></div>';
   }
 }

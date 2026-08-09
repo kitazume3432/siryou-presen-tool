@@ -1,5 +1,5 @@
 ============================================== 
-Update started: 2026/08/09 11:36:59.34 
+Update started: 2026/08/09 11:40:30.73 
 Folder: Z:\siryou-presen-tool 
 ============================================== 
-Overwrote index.html with: index (39).html 
+Overwrote index.html with: index (40).html 
