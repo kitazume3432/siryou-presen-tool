@@ -3154,13 +3154,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const pdfDoc = await pdfjsLib.getDocument({data}).promise;
         for(let i=1;i<=pdfDoc.numPages;i++){
           const page = await pdfDoc.getPage(i);
-          const viewport = page.getViewport({scale:2});
+          const baseViewport = page.getViewport({scale:1});
+          /* 図面など大判ページ（A2/A1/A0等）でも解像度を保ちつつ、
+             キャンバスサイズが際限なく巨大化しないよう長辺3000pxを上限にスケールを調整する */
+          const MAX_DIM = 3000;
+          const longSide = Math.max(baseViewport.width, baseViewport.height);
+          const scale = Math.min(3, MAX_DIM / longSide);
+          const viewport = page.getViewport({scale: Math.max(scale, 1.5)});
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           const ctx = canvas.getContext('2d');
           await page.render({canvasContext:ctx, viewport:viewport}).promise;
-          newSlides.push({id:uid(), kind:'pdfimage', image:canvas.toDataURL('image/jpeg', 0.85)});
+          newSlides.push({id:uid(), kind:'pdfimage', image:canvas.toDataURL('image/png')});
         }
       }
       if(!newSlides.length) throw new Error('PDFからページを読み取れませんでした。');
