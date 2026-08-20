@@ -405,22 +405,22 @@
       <div id="pdfUpdateStatus" style="font-size:11px; color:#948B7E; margin-top:6px; line-height:1.5; display:none;"></div>
     </div>
     <input type="file" id="mfgPdfInput" accept="application/pdf" style="display:none;">
-    <div class="side-section-title">資料PDFをそのまま挿入</div>
-    <div id="rawPdfDropZone" class="pdf-dropzone">
-      <button class="side-btn" id="btnImportRawPdf">資料PDFを選択して挿入</button>
-      <div class="pdf-dropzone-hint">またはPDFをここにドラッグ＆ドロップ（複数可）</div>
-      <input type="file" id="importRawPdfInput" accept="application/pdf" multiple>
-      <div id="rawPdfImportStatus" style="font-size:11px; color:#948B7E; margin-top:6px; line-height:1.5; display:none;"></div>
-    </div>
-    <button class="side-btn" id="btnNewProject">＋ 新しい案件を作成</button>
-    <button class="side-btn" id="btnFixLayout">スライド構成を最新版に更新</button>
-    <div style="font-size:10.5px; color:#948B7E; margin-top:-4px; margin-bottom:10px; line-height:1.5;">古い案件で「総額のとびら」が無い、または「御見積総額」の位置が古いレイアウトのままの場合、ここで最新の並び（主要な仕様・設備の直後）に直します。</div>
     <div class="side-section-title">データの共有</div>
     <button class="side-btn" id="btnExportJson">この案件をJSON書き出し</button>
     <div id="jsonDropZone" class="pdf-dropzone">
       <button class="side-btn" id="btnImportJson">JSONを読み込む</button>
       <div class="pdf-dropzone-hint">またはJSONファイルをここにドラッグ＆ドロップ</div>
       <input type="file" id="importFileInput" accept="application/json">
+    </div>
+    <button class="side-btn" id="btnNewProject">＋ 新しい案件を作成</button>
+    <button class="side-btn" id="btnFixLayout">スライド構成を最新版に更新</button>
+    <div style="font-size:10.5px; color:#948B7E; margin-top:-4px; margin-bottom:10px; line-height:1.5;">古い案件で「総額のとびら」が無い、または「御見積総額」の位置が古いレイアウトのままの場合、ここで最新の並び（主要な仕様・設備の直後）に直します。</div>
+    <div class="side-section-title">資料PDFをそのまま挿入</div>
+    <div id="rawPdfDropZone" class="pdf-dropzone">
+      <button class="side-btn" id="btnImportRawPdf">資料PDFを選択して挿入</button>
+      <div class="pdf-dropzone-hint">またはPDFをここにドラッグ＆ドロップ（複数可）</div>
+      <input type="file" id="importRawPdfInput" accept="application/pdf" multiple>
+      <div id="rawPdfImportStatus" style="font-size:11px; color:#948B7E; margin-top:6px; line-height:1.5; display:none;"></div>
     </div>
     <div class="side-section-title">入力履歴を複数端末で共有（GitHub）</div>
     <div class="gh-panel">
@@ -2114,13 +2114,17 @@ function renderOverview(s, pn){
 }
 
 function renderBignumber(s, pn){
-  return '<div class="slide">'+pn
-    + '<h2 class="slidetitle">'+escapeHtml(s.title)+'</h2>'
-    + '<div class="bn-caption">'+escapeHtml(s.caption)+'</div>'
-    + '<div class="bn-amount">'+escapeHtml(s.amount)+'</div>'
-    + '<div class="bn-sub">'+escapeHtml(s.sub)+'</div>'
-    + '<div class="bn-rule"></div>'
-    + '<div class="bn-footer">'+escapeHtml(s.footer)+'</div>'
+  return '<div class="slide" style="position:relative;">'
+    + '<div style="position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); text-align:center; padding:0 56px;">'
+    + '<div style="max-width:620px; margin:0 auto; background:var(--cream); border-left:6px solid var(--wood); border-radius:6px; padding:64px 72px; box-sizing:border-box; text-align:center; box-shadow:0 12px 32px rgba(43,38,33,0.08);">'
+    + '<div style="font-size:22px; font-weight:700; letter-spacing:1px; color:inherit;">'+escapeHtml(s.title)+'</div>'
+    + '<div style="margin-top:32px; font-size:14px; letter-spacing:2px; color:var(--wood);">'+escapeHtml(s.caption)+'</div>'
+    + '<div style="margin-top:22px; font-size:54px; font-weight:700; color:var(--text-dark); line-height:1.15; letter-spacing:1px;">'+escapeHtml(s.amount)+'</div>'
+    + '<div style="margin-top:28px; font-size:13px; color:var(--text-muted); line-height:1.9;">'+escapeHtml(s.sub)+'</div>'
+    + (s.footer ? '<div style="width:64px; height:1px; background:var(--wood-light); margin:36px auto 24px;"></div><div style="font-size:13px; color:var(--text-muted); line-height:1.9;">'+escapeHtml(s.footer)+'</div>' : '')
+    + '</div>'
+    + '</div>'
+    + pn
     + '</div>';
 }
 
