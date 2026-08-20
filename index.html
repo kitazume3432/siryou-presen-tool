@@ -972,13 +972,6 @@ function projectFromParsedPdf(header, categories, validation){
     groups: defaultCardgridGroups()
   });
 
-  slides.push({id:uid(), kind:'bignumber', title:'御見積総額',
-    caption:'御見積金額（税込）',
-    amount: (header.totalAmount || '¥0').replace(/\.-$/,''),
-    sub: '税抜金額：' + (header.totalExTax || '¥0').replace(/\.-$/,'') + '　　有効期限：発行日（' + (header.issueDate||'') + '）より' + (header.validity||'30日') + '間',
-    footer:'次のページより、金額の内訳を詳しくご説明します。'
-  });
-
   /* listrows スライドは高さ720px固定・overflow:hiddenのため、1枚に収まる行数には上限がある
      （リスト表示域は約530px、1行あたり約70pxのため、安全に収まるのは8行まで）。
      以前は9件ずつ分割していたため、各ページの9件目（例：左官工事・電気工事）が
@@ -1025,6 +1018,13 @@ function projectFromParsedPdf(header, categories, validation){
       });
     });
   }
+
+  slides.push({id:uid(), kind:'bignumber', title:'御見積総額',
+    caption:'御見積金額（税込）',
+    amount: (header.totalAmount || '¥0').replace(/\.-$/,''),
+    sub: '税抜金額：' + (header.totalExTax || '¥0').replace(/\.-$/,'') + '　　有効期限：発行日（' + (header.issueDate||'') + '）より' + (header.validity||'30日') + '間',
+    footer:''
+  });
 
   slides.push({id:uid(), kind:'exclusion', title:'この見積に含まれないもの', subtitle:'下記は別途工事となります。',
     items: (header.exclusionItems && header.exclusionItems.length) ? header.exclusionItems : ['項目1','項目2'],
