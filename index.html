@@ -415,8 +415,11 @@
     <button class="side-btn" id="btnNewProject">＋ 新しい案件を作成</button>
     <div class="side-section-title">データの共有</div>
     <button class="side-btn" id="btnExportJson">この案件をJSON書き出し</button>
-    <button class="side-btn" id="btnImportJson">JSONを読み込む</button>
-    <input type="file" id="importFileInput" accept="application/json">
+    <div id="jsonDropZone" class="pdf-dropzone">
+      <button class="side-btn" id="btnImportJson">JSONを読み込む</button>
+      <div class="pdf-dropzone-hint">またはJSONファイルをここにドラッグ＆ドロップ</div>
+      <input type="file" id="importFileInput" accept="application/json">
+    </div>
     <div class="side-section-title">入力履歴を複数端末で共有（GitHub）</div>
     <div class="gh-panel">
       <p style="font-size:10.5px; color:#948B7E; line-height:1.5;">
@@ -3035,7 +3038,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('importFileInput').addEventListener('change', (e)=>{
     const file = e.target.files[0];
+    if(file) handleJsonImportFile(file);
+    e.target.value = '';
+  });
+
+  function handleJsonImportFile(file){
     if(!file) return;
+    if(file.type && file.type !== 'application/json' && !/\.json$/i.test(file.name||'')){
+      alert('JSONファイルを選択（またはドロップ）してください。');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try{
@@ -3056,8 +3068,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     reader.readAsText(file);
-    e.target.value = '';
-  });
+  }
 
   /* ---- GitHub連携（複数端末で共有） ---- */
   let ghSettings = (()=>{ try{ return JSON.parse(localStorage.getItem(GH_SETTINGS_KEY)) || {}; }catch(e){ return {}; } })();
@@ -3548,11 +3559,36 @@ document.addEventListener('DOMContentLoaded', () => {
       if(file) handlePdfUpdateFile(file);
     });
   }
+  const jsonDropZone = document.getElementById('jsonDropZone');
+  if(jsonDropZone){
+    let jsonDragCounter = 0;
+    jsonDropZone.addEventListener('dragenter', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      jsonDragCounter++;
+      jsonDropZone.classList.add('dragover');
+    });
+    jsonDropZone.addEventListener('dragover', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+    jsonDropZone.addEventListener('dragleave', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      jsonDragCounter = Math.max(0, jsonDragCounter - 1);
+      if(jsonDragCounter === 0) jsonDropZone.classList.remove('dragover');
+    });
+    jsonDropZone.addEventListener('drop', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      jsonDragCounter = 0;
+      jsonDropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(file) handleJsonImportFile(file);
+    });
+  }
   /* ブラウザ既定のPDFプレビュー遷移（タブでファイルが開いてしまう挙動）を
      アプリ全体で無効化しておく。ドロップゾーン以外にドロップされた場合の誤動作防止。 */
   ['dragover','drop'].forEach(evt=>{
     window.addEventListener(evt, (e)=>{
-      if(!e.target.closest || !(e.target.closest('#pdfDropZone') || e.target.closest('#pdfUpdateZone') || e.target.closest('#rawPdfDropZone'))){
+      if(!e.target.closest || !(e.target.closest('#pdfDropZone') || e.target.closest('#pdfUpdateZone') || e.target.closest('#rawPdfDropZone') || e.target.closest('#jsonDropZone'))){
         e.preventDefault();
       }
     });
