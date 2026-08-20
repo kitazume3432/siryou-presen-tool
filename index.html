@@ -413,6 +413,8 @@
       <div id="rawPdfImportStatus" style="font-size:11px; color:#948B7E; margin-top:6px; line-height:1.5; display:none;"></div>
     </div>
     <button class="side-btn" id="btnNewProject">＋ 新しい案件を作成</button>
+    <button class="side-btn" id="btnFixLayout">スライド構成を最新版に更新</button>
+    <div style="font-size:10.5px; color:#948B7E; margin-top:-4px; margin-bottom:10px; line-height:1.5;">古い案件で「総額のとびら」が無い、または「御見積総額」の位置が古いレイアウトのままの場合、ここで最新の並び（主要な仕様・設備の直後）に直します。</div>
     <div class="side-section-title">データの共有</div>
     <button class="side-btn" id="btnExportJson">この案件をJSON書き出し</button>
     <div id="jsonDropZone" class="pdf-dropzone">
@@ -1255,6 +1257,61 @@ function updateProjectWithParsedPdf(project, header, categories, validation){
   project.updatedAt = Date.now();
   stampSchemaVersion(project);
   return {mainFound, feeFound, bignumberFound, budgetFound, mainCount:newMainRows.length, feeCount:newFeeRows.length};
+}
+
+/* ---- 古い案件（「総額のとびら」機能を追加する前に作成されたもの）を、
+   現在の標準レイアウト（主要な仕様・設備の直後にとびら→御見積総額）に直す。
+   それ以外のスライド（写真・仕様説明・クロージング等）には一切触れない。
+   戻り値: {changed, addedCover, movedTotal, foundTotal} */
+function applyLatestSlideLayout(project){
+  const slides = project.slides;
+  if(!Array.isArray(slides) || !slides.length){
+    return {changed:false, addedCover:false, movedTotal:false, foundTotal:false};
+  }
+
+  const cardIdx = slides.findIndex(s=>s.kind==='cardgrid');
+  const totalIdx = slides.findIndex(s=>s.kind==='bignumber' && s.title==='御見積総額');
+  const foundTotal = totalIdx !== -1;
+
+  if(!foundTotal){
+    /* 御見積総額のページ自体が見つからない（タイトルを編集された等）場合は
+       安全のため何もしない。誤って新しいページを作ってしまうのを防ぐ。 */
+    return {changed:false, addedCover:false, movedTotal:false, foundTotal:false};
+  }
+
+  const insertBase = cardIdx === -1 ? 0 : cardIdx + 1;
+  /* すでに「主要な仕様・設備の直後」にある（とびらの有無どちらでも）場合は変更不要 */
+  const alreadyRightAfterCard =
+    totalIdx === insertBase ||
+    (totalIdx === insertBase + 1 && slides[insertBase] && slides[insertBase].kind === 'amountcover');
+  if(alreadyRightAfterCard){
+    return {changed:false, addedCover:false, movedTotal:false, foundTotal:true};
+  }
+
+  /* とびらページ：総額の直前に既にあればそれを使い、無ければ標準文言で新規作成する */
+  let coverSlide = null;
+  let addedCover = false;
+  if(totalIdx > 0 && slides[totalIdx - 1] && slides[totalIdx - 1].kind === 'amountcover'){
+    coverSlide = slides[totalIdx - 1];
+  } else {
+    coverSlide = {id:uid(), kind:'amountcover',
+      heading:'お見積り総額について',
+      sub:'これまでの内訳を踏まえ、次のページで総額をご案内いたします。'
+    };
+    addedCover = true;
+  }
+
+  const totalSlide = slides[totalIdx];
+  /* 削除するインデックスを降順で処理（既存のとびら・総額の2枚、または総額のみの1枚） */
+  const removeIdxs = (!addedCover) ? [totalIdx - 1, totalIdx] : [totalIdx];
+  removeIdxs.sort((a,b)=>b-a).forEach(i=> slides.splice(i, 1));
+
+  const finalInsertAt = cardIdx === -1 ? 0 : slides.findIndex(s=>s.kind==='cardgrid') + 1;
+  slides.splice(finalInsertAt, 0, coverSlide, totalSlide);
+
+  project.updatedAt = Date.now();
+  stampSchemaVersion(project);
+  return {changed:true, addedCover, movedTotal:true, foundTotal:true};
 }
 
 /* ================= メーカー資料PDFからの写真・仕様取り込み ================= */
@@ -2956,6 +3013,22 @@ document.addEventListener('DOMContentLoaded', () => {
     App.presentIndex = 0;
     App.openCardId = null;
     persist(); renderAll();
+  });
+
+  document.getElementById('btnFixLayout').addEventListener('click', ()=>{
+    const proj = currentProject();
+    if(!proj){ return; }
+    const result = applyLatestSlideLayout(proj);
+    if(!result.foundTotal){
+      alert('「御見積総額」のページが見つかりませんでした（タイトルが変更されている可能性があります）。手動でスライドの順番を並び替えてください。');
+      return;
+    }
+    if(!result.changed){
+      alert('すでに最新のレイアウト（主要な仕様・設備の直後にとびら→御見積総額）になっています。変更はありません。');
+      return;
+    }
+    persist(); renderAll();
+    alert('スライド構成を最新版に更新しました。\n\n・「総額のとびら」ページ：' + (result.addedCover ? '新規に追加しました' : '既存のものを移動しました') + '\n・「御見積総額」ページ：主要な仕様・設備の直後に移動しました\n\n他のページ（写真・仕様説明・クロージング等）は変更していません。');
   });
 
   document.getElementById('projectNameInput').addEventListener('input', (e)=>{
