@@ -2315,10 +2315,12 @@ function renderBudgetSummary(s, pn){
 function renderAmountCover(s, pn){
   const heading = escapeHtml(s.heading || 'お見積り総額について');
   const sub = escapeHtml(s.sub || 'これまでの内訳を踏まえ、次のページで総額をご案内いたします。');
-  return '<div class="slide" style="background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">'
-    + BRAND_MARK_ICON_SVG.replace('<svg ', '<svg style="margin-bottom:40px; opacity:0.9;" ')
+  return '<div class="slide" style="background:#fff; position:relative; text-align:center;">'
+    + '<div style="position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); padding:0 60px;">'
     + '<div style="font-size:34px; font-weight:700; letter-spacing:2px; color:var(--dark);">'+heading+'</div>'
-    + '<div style="margin-top:20px; font-size:16px; color:var(--text-muted); max-width:640px; line-height:1.8;">'+sub+'</div>'
+    + '<div style="margin-top:20px; font-size:16px; color:var(--text-muted); max-width:640px; margin-left:auto; margin-right:auto; line-height:1.8;">'+sub+'</div>'
+    + '</div>'
+    + '<img src="'+TITLE_MARK_IMG+'" style="position:absolute; bottom:56px; left:50%; transform:translateX(-50%); width:180px; height:auto;">'
     + pn
     + '</div>';
 }
