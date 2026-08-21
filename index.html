@@ -380,10 +380,43 @@
     .print-page:last-child{page-break-after:auto;}
     .print-page .slide{transform:scale(0.876); transform-origin:center center; box-shadow:none;}
   }
+
+  /* ---------- スマートフォン対応 ----------
+     サイドバー（280px固定幅）が画面の大半を占めてしまい、
+     特にプレビュー/プレゼン表示のスライドがほぼ見えなくなるため、
+     狭い画面ではサイドバーを既定で隠し、ハンバーガーボタンで
+     開閉できるオーバーレイ形式に切り替える。 */
+  #sidebarToggle{display:none;}
+  @media (max-width: 860px){
+    #sidebarToggle{
+      display:flex; align-items:center; justify-content:center;
+      width:36px; height:36px; flex:none; border:1px solid var(--line); border-radius:6px;
+      background:#fff; cursor:pointer; font-size:18px; color:var(--text-dark);
+    }
+    #sidebar{
+      position:fixed; left:0; top:0; bottom:0; z-index:50;
+      transform:translateX(-100%); transition:transform .2s ease; box-shadow:4px 0 24px rgba(0,0,0,.25);
+    }
+    #sidebar.open{transform:translateX(0);}
+    #sidebarOverlay{
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:40;
+    }
+    #sidebarOverlay.open{display:block;}
+    #main{width:100%;}
+    #toolbar{height:auto; flex-wrap:wrap; padding:10px 12px; gap:8px;}
+    #projectNameInput{font-size:14px; flex-basis:100%; order:1;}
+    .tabbtn{font-size:12px; padding:7px 12px;}
+    .save-indicator{font-size:11px;}
+    #slideViewport{padding:8px;}
+    #presentControls{height:auto; flex-wrap:wrap; padding:8px; gap:8px;}
+    #presentControls button{padding:10px 14px; font-size:14px;}
+    #slideCounter{min-width:auto;}
+  }
 </style>
 </head>
 <body>
 <div id="app">
+  <div id="sidebarOverlay"></div>
   <aside id="sidebar">
     <div class="brand-row">
       <svg class="brand-icon" width="26" height="26" viewBox="0 0 104 104" fill="none" stroke="#AD8A5C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 52 L52 22 L88 52"/><path d="M26 48 V86 H78 V48"/><path d="M45 86 V62 H61 V86"/></svg>
@@ -440,6 +473,7 @@
   </aside>
   <main id="main">
     <div id="toolbar">
+      <button id="sidebarToggle" aria-label="メニューを開く">☰</button>
       <input type="text" id="projectNameInput" placeholder="案件名（例：武田様邸）">
       <button class="tabbtn active" id="tabEdit">編集</button>
       <button class="tabbtn" id="tabPresent">プレビュー / プレゼン</button>
@@ -1063,7 +1097,7 @@ function projectFromParsedPdf(header, categories, validation){
 
   slides.push({id:uid(), kind:'amountcover',
     heading:'お見積り総額について',
-    sub:'これまでの内訳を踏まえ、次のページで総額をご案内いたします。'
+    sub:'まずは総額をご案内し、この後のページで内訳を一つずつご説明してまいります。'
   });
 
   slides.push({id:uid(), kind:'bignumber', title:'御見積総額',
@@ -1296,7 +1330,7 @@ function applyLatestSlideLayout(project){
   } else {
     coverSlide = {id:uid(), kind:'amountcover',
       heading:'お見積り総額について',
-      sub:'これまでの内訳を踏まえ、次のページで総額をご案内いたします。'
+      sub:'まずは総額をご案内し、この後のページで内訳を一つずつご説明してまいります。'
     };
     addedCover = true;
   }
@@ -1466,7 +1500,7 @@ function defaultSlide(kind){
     });
     case 'amountcover': return Object.assign(base, {
       heading:'お見積り総額について',
-      sub:'これまでの内訳を踏まえ、次のページで総額をご案内いたします。'
+      sub:'まずは総額をご案内し、この後のページで内訳を一つずつご説明してまいります。'
     });
   }
 }
@@ -1631,7 +1665,7 @@ const SAMPLE_PROJECT_JSON = `{
       "id": "idamtcvr01msb8x12w",
       "kind": "amountcover",
       "heading": "お見積り総額について",
-      "sub": "これまでの内訳を踏まえ、次のページで総額をご案内いたします。"
+      "sub": "まずは総額をご案内し、この後のページで内訳を一つずつご説明してまいります。"
     },
     {
       "id": "idfv99u4uamsb8x12w",
@@ -2318,7 +2352,7 @@ function renderBudgetSummary(s, pn){
 
 function renderAmountCover(s, pn){
   const heading = escapeHtml(s.heading || 'お見積り総額について');
-  const sub = escapeHtml(s.sub || 'これまでの内訳を踏まえ、次のページで総額をご案内いたします。');
+  const sub = escapeHtml(s.sub || 'まずは総額をご案内し、この後のページで内訳を一つずつご説明してまいります。');
   return '<div class="slide" style="background:#fff; position:relative; text-align:center;">'
     + '<div style="position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); padding:0 60px;">'
     + '<div style="font-size:34px; font-weight:700; letter-spacing:2px; color:var(--dark);">'+heading+'</div>'
@@ -3085,6 +3119,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if(e.key==='ArrowLeft'){ App.presentIndex--; renderPresent(); }
   });
   window.addEventListener('resize', ()=>{ if(App.mode==='present') fitStage(); });
+  /* iOS Safari等では画面回転時にresizeイベントが遅れて発火することがあるため、
+     orientationchangeでも改めてfitStage()を呼び、スライドのサイズがずれないようにする */
+  window.addEventListener('orientationchange', ()=>{
+    setTimeout(()=>{ if(App.mode==='present') fitStage(); }, 300);
+  });
+
+  /* ---- スマートフォン向け：サイドバーの開閉（ハンバーガーメニュー） ---- */
+  const sidebarEl = document.getElementById('sidebar');
+  const sidebarOverlayEl = document.getElementById('sidebarOverlay');
+  const sidebarToggleEl = document.getElementById('sidebarToggle');
+  function closeSidebar(){
+    sidebarEl.classList.remove('open');
+    sidebarOverlayEl.classList.remove('open');
+  }
+  function openSidebar(){
+    sidebarEl.classList.add('open');
+    sidebarOverlayEl.classList.add('open');
+  }
+  if(sidebarToggleEl){
+    sidebarToggleEl.addEventListener('click', ()=>{
+      sidebarEl.classList.contains('open') ? closeSidebar() : openSidebar();
+    });
+  }
+  if(sidebarOverlayEl){
+    sidebarOverlayEl.addEventListener('click', closeSidebar);
+  }
+  /* プレビュー/プレゼンに切り替えたら、狭い画面ではサイドバーを自動で閉じて
+     スライド表示エリアを最大限確保する */
+  document.getElementById('tabPresent').addEventListener('click', closeSidebar);
 
   document.getElementById('btnAddSlide').addEventListener('click', ()=>{
     const kind = document.getElementById('addSlideKind').value;
