@@ -602,7 +602,9 @@ const CARDGRID_HISTORY_KEY = "seki_spec_tool_cardgrid_history_v1"; // 案件を�
       例外を投げず、できる範囲で変換して返すこと
       （古いデータが変換しきれなくても、ツールが動かなくなるよりはよい）
    ========================================================= */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
+/* 「最後に」ページの標準の電話番号（案件ごとに編集画面で上書き可能） */
+const DEFAULT_STAFF_TEL = '027-386-3432';
 
 const PROJECT_MIGRATIONS = {
   /* v0（schemaVersion未設定＝2026年8月の初回リリースより前のデータ）→ v1
@@ -611,6 +613,19 @@ const PROJECT_MIGRATIONS = {
      将来ここに0番の変換処理を追記するのではなく、新しい番号
      （1: function(proj){...}）を追加していくこと。 */
   0: function(proj){
+    return proj;
+  },
+  /* v1 → v2：「最後に」ページの電話番号の整理。
+     ・旧番号（0278-52-2239）を新しい標準番号に置き換える
+     ・保存値に含まれた「TEL」の接頭辞を除去する（表示側で「TEL 」を付けるため二重表示になっていた）
+     それ以外の手入力の番号はそのまま残す。 */
+  1: function(proj){
+    (proj.slides || []).forEach(function(sl){
+      if(!sl || sl.kind !== 'closing') return;
+      var t = String(sl.staffTel == null ? '' : sl.staffTel).replace(/^\s*TEL\s*/i, '').trim();
+      if(/^0278[-‐－ー]?52[-‐－ー]?2239$/.test(t)) t = DEFAULT_STAFF_TEL;
+      sl.staffTel = t;
+    });
     return proj;
   }
 };
@@ -1196,7 +1211,7 @@ function projectFromParsedPdf(header, categories, validation){
     steps:['建築申込の依頼','金額を考慮したプランの再検討（当社への前向きなご意志の元）','不安点解消の打合せ'],
     company: header.company || '株式会社関工務所',
     staffName: header.staffName || '',
-    staffTel: header.tel || '',
+    staffTel: DEFAULT_STAFF_TEL,
     photo: ASSET_B64.closing_photo2 || ''
   });
 
@@ -1463,7 +1478,7 @@ function defaultSlide(kind){
       title:'最後に',
       message:'本日は最後までご覧いただき、誠にありがとうございました。いかがでしたでしょうか。この金額に込めた想いと理由を、精一杯お伝えしたつもりです。もし少しでも「この家、この会社にお願いしたい」と感じていただけましたら、ぜひ次のステップへ進ませてください。皆様のご判断を、心よりお待ちしております。',
       steps:['建築申込の依頼','金額を考慮したプランの再検討（当社への前向きなご意志の元）','不安点解消の打合せ'],
-      company:'株式会社関工務所', staffName:'', staffTel:'',
+      company:'株式会社関工務所', staffName:'', staffTel: DEFAULT_STAFF_TEL,
       photo: ASSET_B64.closing_photo2 || '', photoCaption:''
     });
     case 'budgetsummary': return Object.assign(base, {
